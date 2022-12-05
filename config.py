@@ -1,0 +1,1 @@
+FIREBASE_KEY_PATH = "./secrets/gifted-v1-firebase-adminsdk-2le8w-f76bcaea25.json"
