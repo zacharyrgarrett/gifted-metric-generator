@@ -2,7 +2,7 @@ import pandas as pd
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-from config import FIREBASE_KEY_PATH
+from config import FIREBASE_KEY_PATH, FEED_DATA_OUTPUT_PATH, USER_DATA_OUTPUT_PATH
 
 cred = credentials.Certificate(FIREBASE_KEY_PATH)
 firebase_admin.initialize_app(cred)
@@ -79,7 +79,7 @@ def get_feed_data():
     
     # Output to CSV
     feed_data_df = pd.DataFrame(FEED_DATA, columns=FEED_COLUMN_NAMES)
-    feed_data_df.to_csv("C:/Users/Zachary/Desktop/feed_data.csv", encoding='utf-8', index=False)
+    feed_data_df.to_csv(FEED_DATA_OUTPUT_PATH, encoding='utf-8', index=False)
 
 
 # General user details
@@ -162,7 +162,7 @@ def get_user_information():
 
     # Output to CSV
     user_data_df = pd.DataFrame(USER_DATA, columns=USER_COLUMN_NAMES)
-    user_data_df.to_csv("C:/Users/Zachary/Desktop/user_data_new.csv", encoding='utf-8', index=False)
+    user_data_df.to_csv(USER_DATA_OUTPUT_PATH, encoding='utf-8', index=False)
 
         
 
