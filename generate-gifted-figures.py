@@ -1,19 +1,20 @@
+import os
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from datetime import datetime
 
 import pandas as pd
 
 from geopy.geocoders import Nominatim
 
-from config import USER_DATA_PATH, FigurePaths
+from config import FEED_DATA_PATH, USER_DATA_PATH, FigurePaths
 
+feed_df = pd.read_csv(FEED_DATA_PATH)
 users_df = pd.read_csv(USER_DATA_PATH)
 
 
-
 # User categories
-
 def generate_user_categories():
     fig = go.Figure(data=[go.Pie(labels=users_df['Category'])])
     fig.update_traces(hoverinfo='label+percent', textinfo='label+value')
@@ -39,7 +40,6 @@ def get_coordinates():
     location_df['Longitude'] = long
     location_df['Location'] = formatted_location
     return location_df
-
 
 def generate_user_socials():
     ig_count = users_df.groupby(['Instagram_Username']).ngroups
@@ -116,8 +116,31 @@ def generate_users_map():
     )
     fig2.write_html(FigurePaths.WORLD_MAP_PATH)
 
+def convert_timestamp_to_date(timestamp):
+    return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d')
+
+def generate_feed_by_business_category():
+    feed_df["Week"] = feed_df['TimePosted_TIMESTAMP'].apply(convert_timestamp_to_date)
+    feed_df['Week'] = pd.to_datetime(feed_df['Week']) - pd.to_timedelta(7, unit='d')
+    feed_df_grouped_weekly = feed_df.groupby([pd.Grouper(key='Week', freq='W-MON'), 'BusinessCategory'])['UserName']\
+        .count()\
+        .reset_index()\
+        .sort_values('Week')\
+        .rename(columns={"UserName": "Deal_Count"})
+    fig = px.line(feed_df_grouped_weekly, x="Week", y="Deal_Count", color='BusinessCategory',\
+        title="Weekly Deals Per Business Category")
+    fig.show()
+    
+
+def verify_prerequisites():
+    if not os.path.exists("./figures"):
+        os.makedirs("./figures")
 
 if __name__ == "__main__":
-    #generate_user_categories()
-    #generate_users_map()
-    generate_user_socials()
+    verify_prerequisites()
+    # generate_user_categories()
+    # generate_users_map()
+    # generate_user_socials()
+
+    # Feed Figures
+    generate_feed_by_business_category()

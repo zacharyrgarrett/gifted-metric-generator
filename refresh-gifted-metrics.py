@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import firebase_admin
 from firebase_admin import credentials
@@ -163,8 +164,12 @@ def get_user_information():
     user_data_df = pd.DataFrame(USER_DATA, columns=USER_COLUMN_NAMES)
     user_data_df.to_csv(USER_DATA_PATH, encoding='utf-8', index=False)
 
-        
+# Verifies prerequisites
+def verify_prerequisites():
+    if not os.path.exists("./data"):
+        os.makedirs("./data")
 
 if __name__ == "__main__":
+    verify_prerequisites()
     get_feed_data()
     get_user_information()
