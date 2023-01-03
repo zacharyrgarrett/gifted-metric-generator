@@ -22,7 +22,7 @@ def generate_user_categories():
         title_text='User Categories',
         margin=dict(l=0,r=0,t=30,b=0)
     )
-    fig.write_html(FigurePaths.USER_CATEGORIES)
+    fig.write_html(FigurePaths.USER_CATEGORIES, include_plotlyjs="directory")
 
 def get_coordinates():
     lat, long = [], []
@@ -52,7 +52,7 @@ def generate_user_socials():
     ]
     socials_df = pd.DataFrame(socials)
     fig = px.bar(socials_df, y='Users', x='SocialMedia', title='User Socials')
-    fig.write_html(FigurePaths.USER_SOCIALS)
+    fig.write_html(FigurePaths.USER_SOCIALS, include_plotlyjs="directory")
 
 def generate_users_map():
     location_details = get_coordinates()
@@ -72,7 +72,7 @@ def generate_users_map():
         geo_scope='usa',
         margin=dict(l=0,r=0,t=30,b=0)
     )
-    fig1.write_html(FigurePaths.USA_MAP_PATH)
+    fig1.write_html(FigurePaths.USA_MAP_PATH, include_plotlyjs="directory")
 
     fig2 = go.Figure(
             data=go.Scattergeo(
@@ -114,14 +114,12 @@ def generate_users_map():
             )
         )   
     )
-    fig2.write_html(FigurePaths.WORLD_MAP_PATH)
+    fig2.write_html(FigurePaths.WORLD_MAP_PATH, include_plotlyjs="directory")
 
 def convert_timestamp_to_date(timestamp):
     return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d')
 
 def generate_feed_by_business_category():
-    feed_df["Week"] = feed_df['TimePosted_TIMESTAMP'].apply(convert_timestamp_to_date)
-    feed_df['Week'] = pd.to_datetime(feed_df['Week']) - pd.to_timedelta(7, unit='d')
     feed_df_grouped_weekly = feed_df.groupby([pd.Grouper(key='Week', freq='W-MON'), 'BusinessCategory'])['UserName']\
         .count()\
         .reset_index()\
@@ -129,8 +127,60 @@ def generate_feed_by_business_category():
         .rename(columns={"UserName": "Deal_Count"})
     fig = px.line(feed_df_grouped_weekly, x="Week", y="Deal_Count", color='BusinessCategory',\
         title="Weekly Deals Per Business Category")
-    fig.show()
+    fig.write_html(FigurePaths.FEED_BY_BUSINESS_CATEGORY, include_plotlyjs="directory")
+
+def generate_first_post_summarization():
+    username = []
+    date = []
+    for index, row in feed_df.iterrows():
+        if row["UserName"] not in username:
+            username.append(row["UserName"])
+            date.append(row["Date"])
+    data = {
+        'Username': username,
+        'Date': date
+        }
+    first_post_df = pd.DataFrame(data)
+    first_post_df['Week'] = pd.to_datetime(first_post_df['Date']) - pd.to_timedelta(7, unit='d')
+
+    first_post_grouped_weekly = first_post_df.groupby([pd.Grouper(key='Week', freq='W-MON')])['Username']\
+        .count()\
+        .reset_index()\
+        .sort_values('Week')\
+        .rename(columns={"Username": "First_Post_Count"})
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(
+        go.Scatter(x=first_post_grouped_weekly["Week"], y=first_post_grouped_weekly["First_Post_Count"], name="First Post Count"),
+        secondary_y=False,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=first_post_grouped_weekly["Week"],
+            y=first_post_grouped_weekly["First_Post_Count"].cumsum(), name="Cumulative First Posts"),
+            secondary_y=True,
+    )
+
+    fig.update_layout(
+        title_text="First Posts by Week + Cumulative Overlay"
+    )
+
+    # Set x-axis title
+    fig.update_xaxes(title_text="Week")
+
+    # Set y-axes titles
+    fig.update_yaxes(title_text="<b>Weekly</b> First Posts", secondary_y=False)
+    fig.update_yaxes(title_text="<b>Cumulative</b> First Posts", secondary_y=True)
+
+    fig.write_html(FigurePaths.FIRST_POST_BY_WEEK, include_plotlyjs="directory")
     
+    
+def format_feed_dates():
+    global feed_df
+    feed_df["Date"] = feed_df['TimePosted_TIMESTAMP'].apply(convert_timestamp_to_date)
+    feed_df['Week'] = pd.to_datetime(feed_df['Date']) - pd.to_timedelta(7, unit='d')
+    feed_df = feed_df.sort_values('Date')
 
 def verify_prerequisites():
     if not os.path.exists("./figures"):
@@ -138,9 +188,13 @@ def verify_prerequisites():
 
 if __name__ == "__main__":
     verify_prerequisites()
-    # generate_user_categories()
-    # generate_users_map()
-    # generate_user_socials()
+
+    # User Figures
+    generate_user_categories()
+    generate_users_map()
+    generate_user_socials()
 
     # Feed Figures
+    format_feed_dates()
     generate_feed_by_business_category()
+    generate_first_post_summarization()
