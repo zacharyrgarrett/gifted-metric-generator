@@ -127,6 +127,15 @@ def generate_feed_by_business_category():
         .rename(columns={"UserName": "Deal_Count"})
     fig = px.line(feed_df_grouped_weekly, x="Week", y="Deal_Count", color='BusinessCategory',\
         title="Weekly Deals Per Business Category")
+    fig.update_layout(
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
     fig.write_html(FigurePaths.FEED_BY_BUSINESS_CATEGORY, include_plotlyjs="directory")
 
 def generate_first_post_summarization():
@@ -147,23 +156,30 @@ def generate_first_post_summarization():
         .count()\
         .reset_index()\
         .sort_values('Week')\
-        .rename(columns={"Username": "First_Post_Count"})
+        .rename(columns={"Username": "Weekly_First_Post_Count"})
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_trace(
-        go.Scatter(x=first_post_grouped_weekly["Week"], y=first_post_grouped_weekly["First_Post_Count"], name="First Post Count"),
+        go.Scatter(x=first_post_grouped_weekly["Week"], y=first_post_grouped_weekly["Weekly_First_Post_Count"], name="Weekly First Post Count"),
         secondary_y=False,
     )
 
     fig.add_trace(
         go.Scatter(
             x=first_post_grouped_weekly["Week"],
-            y=first_post_grouped_weekly["First_Post_Count"].cumsum(), name="Cumulative First Posts"),
+            y=first_post_grouped_weekly["Weekly_First_Post_Count"].cumsum(), name="Cumulative First Posts"),
             secondary_y=True,
     )
 
     fig.update_layout(
-        title_text="First Posts by Week + Cumulative Overlay"
+        title_text="First Posts by Week + Cumulative Overlay",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
 
     # Set x-axis title

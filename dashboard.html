@@ -1,98 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-      <meta http-equiv="X-UA-Compatible" content="IE=edge">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Gifted Metrics</title>
-      <link href="./dashboard_files/bootstrap.min.css" rel="stylesheet">
-      <link href="./dashboard_files/custom.css" rel="stylesheet">
-      <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-      <![endif]-->
-   </head>
-   <body>
-      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-         <div class="container">
-            <div class="navbar-header">
-               <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-               <span class="sr-only">Toggle navigation</span>
-               <span class="icon-bar"></span>
-               <span class="icon-bar"></span>
-               <span class="icon-bar"></span>
-               </button>
-               <a class="navbar-brand" href="#">
-               <span class="glyphicon glyphicon-fire"></span>
-               Gifted
-               </a>
-            </div>
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-               <ul class="nav navbar-nav">
-                  <li>
-                     <a href="#">Dashboard</a>
-                  </li>
-               </ul>
-            </div>
-         </div>
-      </nav>
-      <div class="container">
-         <div class="row">
-            <div class="col-lg-12">
-               <h1 class="page-header">Gifted
-                  <small>Key Metrics</small>
-               </h1>
-            </div>
-         </div>
-         <div class="row">
-            <div class="col-md-6 portfolio-item">
-                <iframe src="./figures/usa_users.html" style="width: 100%; height: 100%;"></iframe>
-            </div>
-            <div class="col-md-6 portfolio-item">
-                <iframe src="./figures/world_users.html" style="width: 100%; height: 100%;"></iframe>
-            </div>
-         </div>
-         <div class="row">
-            <div class="col-md-7 portfolio-item">
-                <iframe src="./figures/user_categories.html" style="width: 100%; height: 100%;"></iframe>
-            </div>
-            <div class="col-md-5 portfolio-item">
-                <iframe src="./figures/user_socials.html" style="width: 100%; height: 100%;"></iframe>
-            </div>
-         </div>
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+      integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+      crossorigin="anonymous"
+    />
+
+    <!-- Custom CSS-->
+    <link rel="stylesheet" href="./dashboard_files/custom.css" />
+
+    <title>Website</title>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+      <a class="navbar-brand" href="#">Gifted Dashboard</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item active" id="page1-nav">
+            <a class="nav-link" href="#" onclick="showPage('page1')">Users</a>
+          </li>
+          <li class="nav-item" id="page2-nav">
+            <a class="nav-link" href="#" onclick="showPage('page2')">Feed</a>
+          </li>
+        </ul>
       </div>
-      <footer>
-         <div class="footer-blurb">
-            <div class="container">
-               <div class="row">
-                  <div class="col-sm-4 footer-blurb-item">
-                     <img class="img-circle" src="./dashboard_files/3(1)" alt="" width="100" height="100">
-                     <h3>My Stuff</h3>
-                     <p>Upon yielding, kind sea subdue very seed sixth them lesser one lesser there earth days were multiply so sixth gathering fifth that man fowl made.</p>
-                     <p><a class="btn btn-primary" href="https://www.quackit.com/html/templates/download/bootstrap/portfolio-2-column/index.html#">More Stuff</a></p>
-                  </div>
-                  <div class="col-sm-4 footer-blurb-item">
-                     <img class="img-circle" src="./dashboard_files/1(1)" alt="" width="100" height="100">
-                     <h3>Your Stuff</h3>
-                     <p>Upon yielding, kind sea subdue very seed sixth them lesser one lesser there earth days were multiply so sixth gathering fifth that man fowl made.</p>
-                     <p><a class="btn btn-primary" href="https://www.quackit.com/html/templates/download/bootstrap/portfolio-2-column/index.html#">More Stuff</a></p>
-                  </div>
-                  <div class="col-sm-4 footer-blurb-item">
-                     <img class="img-circle" src="./dashboard_files/2(1)" alt="" width="100" height="100">
-                     <h3>Our Stuff</h3>
-                     <p>Upon yielding, kind sea subdue very seed sixth them lesser one lesser there earth days were multiply so sixth gathering fifth that man fowl made.</p>
-                     <p><a class="btn btn-primary" href="https://www.quackit.com/html/templates/download/bootstrap/portfolio-2-column/index.html#">More Stuff</a></p>
-                  </div>
-               </div>
-            </div>
-         </div>
-         <div class="copyright">
-            <div class="container">
-               <p>Copyright @ GetGifted LLC | All Right Reserved 2020</p>
-            </div>
-         </div>
-      </footer>
-      <script src="./dashboard_files/jquery-1.11.3.min.js.download"></script>
-      <script src="./dashboard_files/bootstrap.min.js.download"></script>
-   </body>
+    </nav>
+
+    <!-- Page 1 -->
+    <div class="container mt-5" id="page1" style="display: block;">
+      <h1 class="page-header">
+        Gifted
+        <small class="gifted-text">User Metrics</small>
+      </h1>
+      <div class="row">
+        <div class="col-md-12 portfolio-item">
+          <iframe
+            src="./figures/first_post_by_week.html"
+            style="width: 100%; height: 100%"
+          ></iframe>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-7 portfolio-item">
+          <iframe
+            src="./figures/user_categories.html"
+            style="width: 100%; height: 100%"
+          ></iframe>
+        </div>
+        <div class="col-md-5 portfolio-item">
+          <iframe
+            src="./figures/user_socials.html"
+            style="width: 100%; height: 100%"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 2 -->
+    <div class="container mt-5" id="page2" style="display: block;">
+      <h1 class="page-header">
+        Gifted
+        <small class="gifted-text">Feed Metrics</small>
+      </h1>
+      <div class="row">
+        <div class="col-md-12 portfolio-item">
+          <iframe
+            src="./figures/feed_by_business_category.html"
+            style="width: 100%; height: 100%"
+          ></iframe>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 portfolio-item">
+          <iframe
+            src="./figures/usa_users.html"
+            style="width: 100%; height: 100%"
+          ></iframe>
+        </div>
+        <div class="col-md-6 portfolio-item">
+          <iframe
+            src="./figures/world_users.html"
+            style="width: 100%; height: 100%"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.16.0/dist/umd/popper.min.js"
+      integrity="sha384-oU6T+eyVxJh6p0U6cLdp1L4O6O2QCZoU+8Ql0nHSvxR0FyhGgl9XjfkpBvZ7o3ZG"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+      integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+      crossorigin="anonymous"
+    ></script>
+
+    <script>
+      window.addEventListener("load", (event) => {
+        const get_params = window.location.search.substr(1);
+        tmp = get_params.split("=");
+        if (tmp.length > 0 && tmp[0] === "page") {
+          showPage(tmp[1]);
+        }
+
+        document.querySelector('#page2').style.display = "none";
+      });
+
+      function showPage(pageId) {
+        // Hide all pages
+        const pages = document.querySelectorAll(".container");
+        pages.forEach((page) => (page.style.display = "none"));
+
+        // Reset active nav
+        const navs = document.querySelectorAll(".nav-item");
+        navs.forEach((nav) => nav.classList.remove("active"));
+
+        // Show selected page
+        document.getElementById(pageId).style.display = "block";
+
+        // Add active nav
+        document.getElementById(pageId + "-nav").classList.add("active");
+      }
+    </script>
+  </body>
 </html>
