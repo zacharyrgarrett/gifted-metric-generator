@@ -43,3 +43,12 @@
 .gifted-text {
     color: #56AA88;
 }
+
+.header-metric {
+    float: right;
+    border-radius: 10px;
+    background-color: #56AA88;
+    color: white;
+    padding: 5px 10px;
+    margin-left: 15px;
+}

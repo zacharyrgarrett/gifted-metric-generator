@@ -1,6 +1,7 @@
+import firebase_admin
+import json
 import os
 import pandas as pd
-import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 from config import FIREBASE_KEY_PATH, FEED_DATA_PATH, USER_DATA_PATH
@@ -19,6 +20,11 @@ PLATFORM_TYPES = ['None', 'Instagram', 'Twitter', 'TikTok', 'Youtube']
 
 FEED_DATA = []
 USER_DATA = []
+KEY_METRICS = dict(
+    total_user_count=0,
+    total_deal_count=0,
+    total_brand_count=0
+)
 
 
 # Returns list with objects of keys EntryId, EntryOwnerId, and TimePosted
@@ -78,8 +84,11 @@ def get_feed_data():
         # Merge
         FEED_DATA[i] = user_info | basic_info | secret_info
     
-    # Output to CSV
+    # Create DF for additional summarizations
     feed_data_df = pd.DataFrame(FEED_DATA, columns=FEED_COLUMN_NAMES)
+    KEY_METRICS['total_brand_count'] = len(feed_data_df["BusinessName"].unique())
+
+    # Output to CSV
     feed_data_df.to_csv(FEED_DATA_PATH, encoding='utf-8', index=False)
 
 
@@ -164,6 +173,18 @@ def get_user_information():
     user_data_df = pd.DataFrame(USER_DATA, columns=USER_COLUMN_NAMES)
     user_data_df.to_csv(USER_DATA_PATH, encoding='utf-8', index=False)
 
+
+# Top level data summarizations
+def get_key_metrics():
+    
+    KEY_METRICS['total_user_count'] = len(USER_DATA)
+    KEY_METRICS['total_deal_count'] = len(FEED_DATA)
+
+    # Save to json file
+    with open("./data/key_metrics.json", "w") as outfile:
+        json.dump(KEY_METRICS, outfile)
+
+
 # Verifies prerequisites
 def verify_prerequisites():
     if not os.path.exists("./data"):
@@ -173,3 +194,4 @@ if __name__ == "__main__":
     verify_prerequisites()
     get_feed_data()
     get_user_information()
+    get_key_metrics()
