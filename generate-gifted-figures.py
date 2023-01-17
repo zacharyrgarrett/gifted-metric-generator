@@ -207,8 +207,8 @@ if __name__ == "__main__":
 
     # User Figures
     generate_user_categories()
-    generate_users_map()
     generate_user_socials()
+    generate_users_map()
 
     # Feed Figures
     format_feed_dates()
