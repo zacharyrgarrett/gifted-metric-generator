@@ -3,3 +3,4 @@ geopy
 Nominatim
 pandas
 plotly
+spacy

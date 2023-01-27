@@ -2,16 +2,17 @@ import firebase_admin
 import json
 import os
 import pandas as pd
+import spacy
 from firebase_admin import credentials
 from firebase_admin import firestore
-from config import FIREBASE_KEY_PATH, FEED_DATA_PATH, USER_DATA_PATH
+from config import FIREBASE_KEY_PATH, BUSINESS_DATA_PATH, FEED_DATA_PATH, USER_DATA_PATH
 
 cred = credentials.Certificate(FIREBASE_KEY_PATH)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 FEED_COLUMN_NAMES = ['TimePosted_TIMESTAMP', 'UserName', 'TimePosted', 'TimeUpdated', 'DealStarted', 'DealEnded', 'BusinessName', 'BusinessCategory',
-                'ProductPromoted', 'PlatformPosted', 'BrandReview', 'ProductQuality', 'Recommendation', 'PaymentType']
+                'ProductPromoted', 'PlatformPosted', 'BrandReview', 'ProductQuality', 'Recommendation', 'PaymentType', 'Tea']
 USER_COLUMN_NAMES = ['UserName', 'Firstname', 'Lastname', 'Title', 'State', 'City', 'Gender', 'Category', 'Ethnicity', 'PhoneNumber', 'Email',
                     'Instagram_Username', 'Instagram_URL', 'TikTok_Username', 'TikTok_URL', 'Twitter_Username', 'Twitter_URL',
                     'LinkinBio_Visits_Count', 'Portfolio_Visits_Count', 'LinkinBio_Links_Count', 'Total_LinkinBio_Link_Click_Conversions']
@@ -19,6 +20,7 @@ PAYMENT_TYPES = ['None', 'Paid Partnership', 'Product Gifting', 'Both']
 PLATFORM_TYPES = ['None', 'Instagram', 'Twitter', 'TikTok', 'Youtube']
 
 FEED_DATA = []
+FEED_DATA_DF = pd.DataFrame()
 USER_DATA = []
 KEY_METRICS = dict(
     total_user_count=0,
@@ -31,8 +33,10 @@ KEY_METRICS = dict(
 def get_all_feed_entries() -> list[dict]:
     feed_ref = db.collection(u'Feed')
     feed_docs = feed_ref.stream()
+    feed_entries = []
     for doc in feed_docs:
-        FEED_DATA.append(doc.to_dict())
+        feed_entries.append(doc.to_dict())
+    return feed_entries
 
 
 # Format enums
@@ -66,14 +70,14 @@ def format_feed_data(basic_info, secret_info):
 def get_feed_data():
 
     # Get feed entries
-    get_all_feed_entries()
+    feed_entries = get_all_feed_entries()
 
     # Iterate feed entries
     users_ref = db.collection(u'LinkinBioUsers')
-    for i in range(0, len(FEED_DATA)):
+    for i in range(0, len(feed_entries)):
 
         # Get post info dictionaries
-        entry = FEED_DATA[i]
+        entry = feed_entries[i]
         user_ref = users_ref.document(entry['EntryOwnerId'])
         post_ref = user_ref.collection(u'portfolio').document(entry['EntryId'])
         user_info = user_ref.get().to_dict()
@@ -82,14 +86,26 @@ def get_feed_data():
         basic_info, secret_info = format_feed_data(basic_info, secret_info)
 
         # Merge
-        FEED_DATA[i] = user_info | basic_info | secret_info
+        feed_entries[i] = user_info | basic_info | secret_info
     
-    # Create DF for additional summarizations
-    feed_data_df = pd.DataFrame(FEED_DATA, columns=FEED_COLUMN_NAMES)
-    KEY_METRICS['total_brand_count'] = len(feed_data_df["BusinessName"].unique())
-
     # Output to CSV
-    feed_data_df.to_csv(FEED_DATA_PATH, encoding='utf-8', index=False)
+    feed_df = pd.DataFrame(feed_entries, columns=FEED_COLUMN_NAMES)
+    feed_df.to_csv(FEED_DATA_PATH, encoding='utf-8', index=False)
+
+
+# Loads feed data for the rest of the script
+def load_feed_data():
+    global FEED_DATA_DF, FEED_DATA
+    FEED_DATA_DF = pd.read_csv(FEED_DATA_PATH)
+    FEED_DATA = FEED_DATA_DF.to_dict('records')
+
+
+# Group by business
+def aggregate_by_business():
+    business_grouped = FEED_DATA_DF.groupby("BusinessName")
+    business_agg = business_grouped.agg({'BrandReview': ['mean'], 'ProductQuality': ['mean'], 'UserName': ['count']})
+    business_agg.reset_index().to_csv(BUSINESS_DATA_PATH, encoding='utf-8', index=False)
+
 
 
 # General user details
@@ -137,6 +153,7 @@ def get_linkinbio_links_details(collection):
 # Retrieves all LinkinBio users and their information
 def get_user_information():
 
+    user_data = []
     users_ref = db.collection(u'LinkinBioUsers')
 
     # Iterate each LinkinBio user
@@ -167,11 +184,18 @@ def get_user_information():
                 linkinbio_links_details = get_linkinbio_links_details(collection)
                 
         # Append user info before going to the next user
-        USER_DATA.append(basic_details | user_details | linkinbio_visits_details | portfolio_visits_details | social_media_details | linkinbio_links_details)
+        user_data.append(basic_details | user_details | linkinbio_visits_details | portfolio_visits_details | social_media_details | linkinbio_links_details)
 
     # Output to CSV
-    user_data_df = pd.DataFrame(USER_DATA, columns=USER_COLUMN_NAMES)
+    user_data_df = pd.DataFrame(user_data, columns=USER_COLUMN_NAMES)
     user_data_df.to_csv(USER_DATA_PATH, encoding='utf-8', index=False)
+
+
+# Loads user data
+def load_user_information():
+    global USER_DATA
+    user_data_df = pd.read_csv(USER_DATA_PATH)
+    USER_DATA = user_data_df.to_dict('records')
 
 
 # Top level data summarizations
@@ -179,6 +203,7 @@ def get_key_metrics():
     
     KEY_METRICS['total_user_count'] = len(USER_DATA)
     KEY_METRICS['total_deal_count'] = len(FEED_DATA)
+    KEY_METRICS['total_brand_count'] = len(FEED_DATA_DF["BusinessName"].unique())
 
     # Save to json file
     with open("./data/key_metrics.json", "w") as outfile:
@@ -190,8 +215,18 @@ def verify_prerequisites():
     if not os.path.exists("./data"):
         os.makedirs("./data")
 
+
 if __name__ == "__main__":
     verify_prerequisites()
+
+    # Feed data
     get_feed_data()
+    load_feed_data()
+    aggregate_by_business()
+
+    # User data
     get_user_information()
+    load_user_information()
+
+    # Top level metrics
     get_key_metrics()
