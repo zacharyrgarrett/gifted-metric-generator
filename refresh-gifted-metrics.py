@@ -19,6 +19,7 @@ USER_COLUMN_NAMES = ['UserName', 'Firstname', 'Lastname', 'Title', 'State', 'Cit
                     'LinkinBio_Visits_Count', 'Portfolio_Visits_Count', 'LinkinBio_Links_Count', 'Total_LinkinBio_Link_Click_Conversions']
 PAYMENT_TYPES = ['None', 'Paid Partnership', 'Product Gifting', 'Both']
 PLATFORM_TYPES = ['None', 'Instagram', 'Twitter', 'TikTok', 'Youtube']
+BUSINESS_NAME_BASELINE_SCORE = 92
 
 FEED_DATA = []
 FEED_DATA_DF = pd.DataFrame()
@@ -98,7 +99,8 @@ def get_feed_data():
 # Cleans up feed data
 def fix_feed_data():
     feed_data = pd.read_csv(FEED_DATA_PATH)
-    standardized_business_names(feed_data)
+    feed_data = standardized_business_names(feed_data)
+    feed_data.to_csv(FEED_DATA_PATH, encoding='utf-8', index=False)
 
 
 # Standardized business names with similar spellings
@@ -107,10 +109,10 @@ def standardized_business_names(feed_data: pd.DataFrame):
     business_names = business_names_series.unique()
     for name in business_names:
         closest_match = process.extractOne(name, COMMON_BUSINESS_NAMES)
-        if closest_match[1] >= 92:
-            print(closest_match)
-            business_names_series.replace(closest_match[0], name)
-    print(business_names_series.unique())
+        if closest_match[1] >= BUSINESS_NAME_BASELINE_SCORE:
+            business_names_series = business_names_series.replace(name, closest_match[0])
+    feed_data['BusinessName'] = business_names_series
+    return feed_data
 
 
 # Loads feed data for the rest of the script
@@ -253,12 +255,12 @@ if __name__ == "__main__":
     # Feed data
     # get_feed_data()
     fix_feed_data()
-    # load_feed_data()
-    # aggregate_by_business()
+    load_feed_data()
+    aggregate_by_business()
 
     # User data
     # get_user_information()
-    # load_user_information()
+    load_user_information()
 
     # Top level metrics
-    # get_key_metrics()
+    get_key_metrics()

@@ -28,8 +28,6 @@ Foundation==0.1.0a0.dev1
 fsspec==2023.1.0
 genapi==0.0.8
 gensim==4.3.0
-grpc_reflection==1.0.0
-grpc_tools==1.0.0
 h5py==3.8.0
 HTMLParser==0.0.2
 hypothesis==6.65.2
