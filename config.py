@@ -14,3 +14,15 @@ class FigurePaths:
     USA_MAP_PATH = f"{FIGURES_DIR_PATH}/usa_users.html"
     USER_CATEGORIES = f"{FIGURES_DIR_PATH}/user_categories.html"
     USER_SOCIALS = f"{FIGURES_DIR_PATH}/user_socials.html"
+
+
+COMMON_BUSINESS_NAMES = [
+    "Alixandra Blue",
+    "Beginning Boutique",
+    "Boutine LA",
+    "Bright Swimwear",
+    "Colorful Natalie",
+    "Edikted",
+    "PrettyLittleThing",
+    "Princess Polly",
+]

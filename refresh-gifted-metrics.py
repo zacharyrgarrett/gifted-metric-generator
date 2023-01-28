@@ -2,10 +2,11 @@ import firebase_admin
 import json
 import os
 import pandas as pd
-import spacy
 from firebase_admin import credentials
 from firebase_admin import firestore
-from config import FIREBASE_KEY_PATH, BUSINESS_DATA_PATH, FEED_DATA_PATH, USER_DATA_PATH
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
+from config import BUSINESS_DATA_PATH, COMMON_BUSINESS_NAMES, FEED_DATA_PATH, FIREBASE_KEY_PATH, USER_DATA_PATH
 
 cred = credentials.Certificate(FIREBASE_KEY_PATH)
 firebase_admin.initialize_app(cred)
@@ -68,6 +69,7 @@ def format_feed_data(basic_info, secret_info):
 
 # Returns all information associated with feed posts
 def get_feed_data():
+    feed_data = []
 
     # Get feed entries
     feed_entries = get_all_feed_entries()
@@ -86,11 +88,29 @@ def get_feed_data():
         basic_info, secret_info = format_feed_data(basic_info, secret_info)
 
         # Merge
-        feed_entries[i] = user_info | basic_info | secret_info
+        feed_data.append(user_info | basic_info | secret_info)
     
     # Output to CSV
-    feed_df = pd.DataFrame(feed_entries, columns=FEED_COLUMN_NAMES)
+    feed_df = pd.DataFrame(feed_data, columns=FEED_COLUMN_NAMES)
     feed_df.to_csv(FEED_DATA_PATH, encoding='utf-8', index=False)
+
+
+# Cleans up feed data
+def fix_feed_data():
+    feed_data = pd.read_csv(FEED_DATA_PATH)
+    standardized_business_names(feed_data)
+
+
+# Standardized business names with similar spellings
+def standardized_business_names(feed_data: pd.DataFrame):
+    business_names_series = feed_data['BusinessName']
+    business_names = business_names_series.unique()
+    for name in business_names:
+        closest_match = process.extractOne(name, COMMON_BUSINESS_NAMES)
+        if closest_match[1] >= 92:
+            print(closest_match)
+            business_names_series.replace(closest_match[0], name)
+    print(business_names_series.unique())
 
 
 # Loads feed data for the rest of the script
@@ -216,17 +236,29 @@ def verify_prerequisites():
         os.makedirs("./data")
 
 
+# Testing what score passes for business comparison
+def business_name_comparison_test():
+    cont = "y"
+    while cont == "y":
+        name1 = input("1: ")
+        name2 = input("2: ")
+        print(fuzz.WRatio(name1, name2))
+        cont = input("Continue? (y/n): ")
+
+
 if __name__ == "__main__":
+    # Make sure file paths exist
     verify_prerequisites()
 
     # Feed data
-    get_feed_data()
-    load_feed_data()
-    aggregate_by_business()
+    # get_feed_data()
+    fix_feed_data()
+    # load_feed_data()
+    # aggregate_by_business()
 
     # User data
-    get_user_information()
-    load_user_information()
+    # get_user_information()
+    # load_user_information()
 
     # Top level metrics
-    get_key_metrics()
+    # get_key_metrics()
