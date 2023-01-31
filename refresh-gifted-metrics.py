@@ -2,6 +2,7 @@ import firebase_admin
 import json
 import os
 import pandas as pd
+from datetime import datetime
 from firebase_admin import credentials
 from firebase_admin import firestore
 from fuzzywuzzy import fuzz
@@ -95,13 +96,19 @@ def get_feed_data():
     feed_df = pd.DataFrame(feed_data, columns=FEED_COLUMN_NAMES)
     feed_df.to_csv(FEED_DATA_PATH, encoding='utf-8', index=False)
 
-
-# Cleans up feed data
+# Cleans up feed data and overwrite raw data csv
 def fix_feed_data():
     feed_data = pd.read_csv(FEED_DATA_PATH)
+    feed_data = convert_to_usable_date(feed_data)
     feed_data = standardized_business_names(feed_data)
     feed_data.to_csv(FEED_DATA_PATH, encoding='utf-8', index=False)
 
+def convert_timestamp_to_date(timestamp):
+    return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d')
+
+def convert_to_usable_date(feed_data: pd.DataFrame):
+    feed_data['TimePosted'] = feed_data['TimePosted_TIMESTAMP'].apply(convert_timestamp_to_date)
+    return feed_data
 
 # Standardized business names with similar spellings
 def standardized_business_names(feed_data: pd.DataFrame):
@@ -122,12 +129,32 @@ def load_feed_data():
     FEED_DATA = FEED_DATA_DF.to_dict('records')
 
 
+def generate_business_data():
+    aggregate_by_business()
+
 # Group by business
 def aggregate_by_business():
     business_grouped = FEED_DATA_DF.groupby("BusinessName")
-    business_agg = business_grouped.agg({'BrandReview': ['mean'], 'ProductQuality': ['mean'], 'UserName': ['count']})
-    business_agg.reset_index().to_csv(BUSINESS_DATA_PATH, encoding='utf-8', index=False)
 
+    # Calculate metric averages and counts
+    business_agg = business_grouped.agg({'BrandReview': ['mean'], 'ProductQuality': ['mean'], 'UserName': ['count']})
+    business_agg = business_agg.reset_index()
+    business_agg.columns = ["BusinessName", "BrandReview", "ProductReview", "DealCount"]
+
+    # Multi-grouping to find percent of recommendations
+    recommendation_grouped = FEED_DATA_DF[FEED_DATA_DF['Recommendation'] == True].groupby(["BusinessName", "Recommendation"])
+    recommendation_agg = recommendation_grouped.agg({'Recommendation': ['count']})
+    recommendation_agg = recommendation_agg.reset_index()
+    recommendation_agg.columns = ["BusinessName", "RecommendationGroup", "Recommendation_Yes"]
+    business_agg['RecommendedPercentage'] = round(recommendation_agg['Recommendation_Yes'] / business_agg['DealCount'], 2)
+
+    # Format column values
+    business_agg['BrandReview'] = business_agg['BrandReview'].round(2)
+    business_agg['ProductReview'] = business_agg['ProductReview'].round(2)
+    business_agg.loc[:, 'RecommendedPercentage'] = business_agg['RecommendedPercentage'].map('{:.2%}'.format)
+    
+    # Save to CSV
+    business_agg.to_csv(BUSINESS_DATA_PATH, encoding='utf-8', index=False)
 
 
 # General user details
@@ -236,6 +263,8 @@ def get_key_metrics():
 def verify_prerequisites():
     if not os.path.exists("./data"):
         os.makedirs("./data")
+    if not os.path.exists("./data/business_data"):
+        os.makedirs("./data/business_data")
 
 
 # Testing what score passes for business comparison
@@ -256,11 +285,13 @@ if __name__ == "__main__":
     # get_feed_data()
     fix_feed_data()
     load_feed_data()
-    aggregate_by_business()
 
     # User data
     # get_user_information()
     load_user_information()
+
+    # Business summaries
+    generate_business_data()
 
     # Top level metrics
     get_key_metrics()

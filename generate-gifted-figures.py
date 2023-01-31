@@ -2,13 +2,13 @@ import os
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 
 from geopy.geocoders import Nominatim
 
-from config import FEED_DATA_PATH, USER_DATA_PATH, FigurePaths
+from config import FEED_DATA_PATH, USER_DATA_PATH, BUSINESS_WEEKLY_PATH, BUSINESS_USER_LOCATIONS_PATH, BUSINESS_POSTS_USER_CATEGORY_PATH, FigurePaths
 
 feed_df = pd.read_csv(FEED_DATA_PATH)
 users_df = pd.read_csv(USER_DATA_PATH)
@@ -31,7 +31,8 @@ def get_coordinates():
     for index, row in users_df.iterrows():
         city = row.City
         country = "Turkey" if row.State == "TR" else "United States"
-        loc = geolocator.geocode(f"{city},{country}")
+        state = "" if row.State == "TR" else f", {row.State}"
+        loc = geolocator.geocode(f"{city}{state}, {country}")
         lat.append(loc.latitude)
         long.append(loc.longitude)
         formatted_location.append(loc.raw['display_name'])
@@ -39,7 +40,32 @@ def get_coordinates():
     location_df['Latitude'] = lat
     location_df['Longitude'] = long
     location_df['Location'] = formatted_location
+    users_df['Location'] = formatted_location
     return location_df
+
+# Influencer location by business
+def find_user_location_by_business():
+    user_business_grouped = feed_df.groupby(['UserName','BusinessName'])
+    user_business_grouped = user_business_grouped.size().reset_index()
+    user_business_grouped = user_business_grouped[['UserName','BusinessName']]
+    user_business_grouped = user_business_grouped.set_index(['UserName'])
+
+    user_business_grouped['Location'] = ""
+    user_location = users_df[['UserName', 'Location']].set_index('UserName')
+    for user in user_business_grouped.index.unique():
+        user_business_grouped.loc[user, 'Location'] = user_location.loc[user, 'Location']
+    
+    user_business_grouped = user_business_grouped.reset_index().groupby(['BusinessName','Location']).count().reset_index()
+    user_business_grouped.rename(columns={"UserName": "UserCount"}).to_csv(BUSINESS_USER_LOCATIONS_PATH, encoding='utf-8', index=False)
+
+# Influencer types for posts by business
+def find_influencer_type_per_deal_by_business():
+    feed_entries = feed_df[['UserName','BusinessName']].to_dict('records')
+    influencers = users_df.set_index('UserName')
+    for i in range(0, len(feed_entries)):
+        feed_entries[i] = feed_entries[i] | dict(Category=influencers.loc[feed_entries[i]['UserName'], 'Category'])
+    category_summary = pd.DataFrame(feed_entries).groupby(['BusinessName', 'Category']).count().reset_index()
+    category_summary.rename(columns={"UserName": "PostCount"}).to_csv(BUSINESS_POSTS_USER_CATEGORY_PATH, encoding='utf-8', index=False)
 
 def generate_user_socials():
     ig_count = users_df.groupby(['Instagram_Username']).ngroups
@@ -190,8 +216,46 @@ def generate_first_post_summarization():
     fig.update_yaxes(title_text="<b>Cumulative</b> First Posts", secondary_y=True)
 
     fig.write_html(FigurePaths.FIRST_POST_BY_WEEK, include_plotlyjs="directory")
+
+def generate_business_weekly_summary():
+    now = datetime.now()
+    current_week = datetime.combine((now - timedelta(days = now.weekday())).date(), datetime.min.time())
+
+    # Make feed copy and filter
+    feed_copy = feed_df.copy()
+    feed_grouped_weekly = feed_copy.groupby(['BusinessName', pd.Grouper(key='Week', freq='W-MON')]).agg({'BrandReview': ['mean'], 'ProductQuality': ['mean'], 'UserName': ['count']})
+    feed_grouped_weekly = feed_grouped_weekly.reset_index()
+    feed_grouped_weekly.columns = ["BusinessName", "Week", "BrandReview", "ProductReview", "DealCount"]
+
+    # Multi-grouping to find percent of recommendations
+    recommendation_grouped = feed_copy[feed_copy['Recommendation'] == True].groupby(['BusinessName', pd.Grouper(key='Week', freq='W-MON'), 'Recommendation'])
+    recommendation_agg = recommendation_grouped.agg({'Recommendation': ['count']})
+    recommendation_agg = recommendation_agg.reset_index()
+    recommendation_agg.columns = ["BusinessName", "Week", "RecommendationGroup", "Recommendation_Yes"]
+
+    # Format values
+    feed_grouped_weekly['RecommendedPercentage'] = round(recommendation_agg['Recommendation_Yes'] / feed_grouped_weekly['DealCount'], 2)
+    feed_grouped_weekly['BrandReview'] = feed_grouped_weekly['BrandReview'].round(2)
+    feed_grouped_weekly['ProductReview'] = feed_grouped_weekly['ProductReview'].round(2)
+    feed_grouped_weekly.loc[:, 'RecommendedPercentage'] = feed_grouped_weekly['RecommendedPercentage'].map('{:.2%}'.format)
     
-    
+    # Fill in empty time steps - will make graphs look better
+    business_names = feed_grouped_weekly['BusinessName'].unique()
+    week_inc = feed_grouped_weekly['Week'].min()
+    feed_grouped_weekly = feed_grouped_weekly.set_index(['BusinessName', 'Week'])
+    while week_inc <= current_week - timedelta(weeks=1):
+        for business_name in business_names:
+            week_str = datetime.combine(week_inc, datetime.min.time())
+            if (business_name, week_str) not in feed_grouped_weekly.index:
+                feed_grouped_weekly.loc[(business_name, week_str),:] = ('','',0,'')
+        week_inc = week_inc + timedelta(weeks = 1)
+
+    # Reformat and save
+    feed_grouped_weekly = feed_grouped_weekly.reset_index()
+    feed_grouped_weekly = feed_grouped_weekly.sort_values(by=['Week', 'BusinessName'])
+    feed_grouped_weekly = feed_grouped_weekly[['Week', 'BusinessName', 'DealCount', 'BrandReview', 'ProductReview', 'RecommendedPercentage']]
+    feed_grouped_weekly.to_csv(BUSINESS_WEEKLY_PATH, encoding='utf-8', index=False)
+
 def format_feed_dates():
     global feed_df
     feed_df["Date"] = feed_df['TimePosted_TIMESTAMP'].apply(convert_timestamp_to_date)
@@ -203,6 +267,7 @@ def verify_prerequisites():
         os.makedirs("./figures")
 
 if __name__ == "__main__":
+    # Verify paths exist
     verify_prerequisites()
 
     # User Figures
@@ -214,3 +279,8 @@ if __name__ == "__main__":
     format_feed_dates()
     generate_feed_by_business_category()
     generate_first_post_summarization()
+
+    # Generate additional reports
+    generate_business_weekly_summary()
+    find_user_location_by_business()
+    find_influencer_type_per_deal_by_business()
