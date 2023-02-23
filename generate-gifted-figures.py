@@ -170,7 +170,7 @@ def generate_first_post_summarization():
     for index, row in feed_df.iterrows():
         if row["UserName"] not in username:
             username.append(row["UserName"])
-            date.append(row["Date"])
+            date.append(row["TimePosted"])
     data = {
         'Username': username,
         'Date': date
@@ -256,11 +256,10 @@ def generate_business_weekly_summary():
     feed_grouped_weekly = feed_grouped_weekly[['Week', 'BusinessName', 'DealCount', 'BrandReview', 'ProductReview', 'RecommendedPercentage']]
     feed_grouped_weekly.to_csv(BUSINESS_WEEKLY_PATH, encoding='utf-8', index=False)
 
-def format_feed_dates():
+def assign_week_to_deals():
     global feed_df
-    feed_df["Date"] = feed_df['TimePosted_TIMESTAMP'].apply(convert_timestamp_to_date)
-    feed_df['Week'] = pd.to_datetime(feed_df['Date']) - pd.to_timedelta(7, unit='d')
-    feed_df = feed_df.sort_values('Date')
+    feed_df['Week'] = pd.to_datetime(feed_df['DealStarted']) - pd.to_timedelta(7, unit='d')
+    feed_df = feed_df.sort_values('DealStarted')
 
 def verify_prerequisites():
     if not os.path.exists("./figures"):
@@ -276,7 +275,7 @@ if __name__ == "__main__":
     generate_users_map()
 
     # Feed Figures
-    format_feed_dates()
+    assign_week_to_deals()
     generate_feed_by_business_category()
     generate_first_post_summarization()
 

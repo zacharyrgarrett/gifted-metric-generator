@@ -7,7 +7,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
-from config import BUSINESS_DATA_PATH, COMMON_BUSINESS_NAMES, FEED_DATA_PATH, FIREBASE_KEY_PATH, USER_DATA_PATH
+from config import BUSINESS_DATA_PATH, BUSINESS_NAME_BASELINE_SCORE, COMMON_BUSINESS_NAMES, FEED_DATA_PATH, FIREBASE_KEY_PATH, USER_DATA_PATH
 
 cred = credentials.Certificate(FIREBASE_KEY_PATH)
 firebase_admin.initialize_app(cred)
@@ -20,7 +20,6 @@ USER_COLUMN_NAMES = ['UserName', 'Firstname', 'Lastname', 'Title', 'State', 'Cit
                     'LinkinBio_Visits_Count', 'Portfolio_Visits_Count', 'LinkinBio_Links_Count', 'Total_LinkinBio_Link_Click_Conversions']
 PAYMENT_TYPES = ['None', 'Paid Partnership', 'Product Gifting', 'Both']
 PLATFORM_TYPES = ['None', 'Instagram', 'Twitter', 'TikTok', 'Youtube']
-BUSINESS_NAME_BASELINE_SCORE = 92
 
 FEED_DATA = []
 FEED_DATA_DF = pd.DataFrame()
@@ -106,8 +105,16 @@ def fix_feed_data():
 def convert_timestamp_to_date(timestamp):
     return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d')
 
+def convert_deal_dates_to_date(long_date):
+    try:
+        return datetime.strptime(str(long_date), '%c').strftime('%Y-%m-%d')
+    except:
+        return long_date
+
 def convert_to_usable_date(feed_data: pd.DataFrame):
     feed_data['TimePosted'] = feed_data['TimePosted_TIMESTAMP'].apply(convert_timestamp_to_date)
+    feed_data['DealStarted'] = feed_data['DealStarted'].apply(convert_deal_dates_to_date)
+    feed_data['DealEnded'] = feed_data['DealEnded'].apply(convert_deal_dates_to_date)
     return feed_data
 
 # Standardized business names with similar spellings
@@ -282,7 +289,7 @@ if __name__ == "__main__":
     verify_prerequisites()
 
     # Feed data
-    # get_feed_data()
+    get_feed_data()
     fix_feed_data()
     load_feed_data()
 

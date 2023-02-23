@@ -19,14 +19,41 @@ class FigurePaths:
     USER_CATEGORIES = f"{FIGURES_DIR_PATH}/user_categories.html"
     USER_SOCIALS = f"{FIGURES_DIR_PATH}/user_socials.html"
 
-
+BUSINESS_NAME_BASELINE_SCORE = 85
 COMMON_BUSINESS_NAMES = [
+    "Ali & Ariel",
     "Alixandra Blue",
+    "American Threads",
+    "APAL",
+    "Babe Original",
     "Beginning Boutique",
     "Boutine LA",
     "Bright Swimwear",
+    "Cam Apparel",
+    "Cider",
+    "City Beach Australia ",
     "Colorful Natalie",
+    "Conair",
+    "Desert Sun Tanning",
     "Edikted",
+    "Express",
+    "Faded Moon",
+    "HairdoUSA",
+    "kollyy",
+    "Melzi",
+    "Members Only",
+    "Panthaus",
     "PrettyLittleThing",
     "Princess Polly",
+    "Rock N' Rags",
+    "Sobe Shades",
+    "Sojos Vision",
+    "Studs",
+    "That's So Fetch",
+    "University Tees",
+    "Upbite Denim",
+    "VibeSzn",
+    "West Angel Jewelry",
+    "Windsor",
+    "Zoe All Over",
 ]
