@@ -289,7 +289,7 @@ if __name__ == "__main__":
     verify_prerequisites()
 
     # Feed data
-    get_feed_data()
+    # get_feed_data()
     fix_feed_data()
     load_feed_data()
 

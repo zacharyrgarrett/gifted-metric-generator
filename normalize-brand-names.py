@@ -52,10 +52,10 @@ def normalize_business_names():
             closest_match = process.extractOne(business_name, COMMON_BUSINESS_NAMES)
 
             # Update BusinessName if there is a valid match
-            if closest_match[1] >= BUSINESS_NAME_BASELINE_SCORE:
-                new_name = closest_match[0]
+            new_name = closest_match[0]
+            if closest_match[1] >= BUSINESS_NAME_BASELINE_SCORE and new_name is not business_name:
                 post_ref.update({u'BusinessName': new_name})
-                print(f"Updated '{business_name}' to '{new_name}' (User: {entry['EntryOwnerId']}, Post: {entry['EntryOwnerId']})")
+                print(f"Updated '{business_name}' to '{new_name}' (User: {entry['EntryOwnerId']}, Post: {entry['EntryId']})")
 
 
 # Fuzzywuzzy comparisons of all raw business names with all normalized names
@@ -81,7 +81,7 @@ def business_normalization_benchmark():
 
 if __name__ == "__main__":
     # business_normalization_benchmark()
-    # normalize_business_names()
+    normalize_business_names()
     exit()
     
 
