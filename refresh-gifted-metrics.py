@@ -7,9 +7,9 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
-from config import BUSINESS_DATA_PATH, BUSINESS_NAME_BASELINE_SCORE, COMMON_BUSINESS_NAMES, FEED_DATA_PATH, FIREBASE_KEY_PATH, USER_DATA_PATH
+from config import FilePaths, COMMON_BUSINESS_NAMES, BUSINESS_NAME_BASELINE_SCORE
 
-cred = credentials.Certificate(FIREBASE_KEY_PATH)
+cred = credentials.Certificate(FilePaths.FIREBASE_KEY_PATH)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
@@ -93,14 +93,15 @@ def get_feed_data():
     
     # Output to CSV
     feed_df = pd.DataFrame(feed_data, columns=FEED_COLUMN_NAMES)
-    feed_df.to_csv(FEED_DATA_PATH, encoding='utf-8', index=False)
+    feed_df.to_csv(FilePaths.FEED_DATA_PATH, encoding='utf-8', index=False)
 
 # Cleans up feed data and overwrite raw data csv
 def fix_feed_data():
-    feed_data = pd.read_csv(FEED_DATA_PATH)
+    feed_data = pd.read_csv(FilePaths.FEED_DATA_PATH)
     feed_data = convert_to_usable_date(feed_data)
     feed_data = standardized_business_names(feed_data)
-    feed_data.to_csv(FEED_DATA_PATH, encoding='utf-8', index=False)
+    feed_data.to_csv(FilePaths.FEED_DATA_PATH, encoding='utf-8', index=False)
+    feed_data.to_json(FilePaths.FEED_DATA_PATH_JSON, orient="records")
 
 def convert_timestamp_to_date(timestamp):
     return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d')
@@ -132,7 +133,7 @@ def standardized_business_names(feed_data: pd.DataFrame):
 # Loads feed data for the rest of the script
 def load_feed_data():
     global FEED_DATA_DF, FEED_DATA
-    FEED_DATA_DF = pd.read_csv(FEED_DATA_PATH)
+    FEED_DATA_DF = pd.read_csv(FilePaths.FEED_DATA_PATH)
     FEED_DATA = FEED_DATA_DF.to_dict('records')
 
 
@@ -161,7 +162,8 @@ def aggregate_by_business():
     business_agg.loc[:, 'RecommendedPercentage'] = business_agg['RecommendedPercentage'].map('{:.2%}'.format)
     
     # Save to CSV
-    business_agg.to_csv(BUSINESS_DATA_PATH, encoding='utf-8', index=False)
+    business_agg.to_csv(FilePaths.BUSINESS_DATA_PATH, encoding='utf-8', index=False)
+    business_agg.to_json(FilePaths.BUSINESS_DATA_PATH_JSON, orient="records")
 
 
 # General user details
@@ -244,13 +246,13 @@ def get_user_information():
 
     # Output to CSV
     user_data_df = pd.DataFrame(user_data, columns=USER_COLUMN_NAMES)
-    user_data_df.to_csv(USER_DATA_PATH, encoding='utf-8', index=False)
+    user_data_df.to_csv(FilePaths.USER_DATA_PATH, encoding='utf-8', index=False)
 
 
 # Loads user data
 def load_user_information():
     global USER_DATA
-    user_data_df = pd.read_csv(USER_DATA_PATH)
+    user_data_df = pd.read_csv(FilePaths.USER_DATA_PATH)
     USER_DATA = user_data_df.to_dict('records')
 
 
@@ -262,7 +264,7 @@ def get_key_metrics():
     KEY_METRICS['total_brand_count'] = len(FEED_DATA_DF["BusinessName"].unique())
 
     # Save to json file
-    with open("./data/key_metrics.json", "w") as outfile:
+    with open("./data/json/key_metrics.json", "w") as outfile:
         json.dump(KEY_METRICS, outfile)
 
 

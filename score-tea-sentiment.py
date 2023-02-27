@@ -3,14 +3,14 @@ import pandas as pd
 
 from nltk.tokenize import word_tokenize
 from nltk.sentiment import SentimentIntensityAnalyzer
-from config import BUSINESS_DATA_PATH, BUSINESS_NAME_BASELINE_SCORE, COMMON_BUSINESS_NAMES, FEED_DATA_PATH, FIREBASE_KEY_PATH, USER_DATA_PATH
+from config import FilePaths
 
 def filter_tokens(token_list):
     return [w for w in token_list if w.isalpha()]
 
 def score_sentiment():
 
-    feed_data = pd.read_csv(FEED_DATA_PATH)
+    feed_data = pd.read_csv(FilePaths.FEED_DATA_PATH)
     tea = feed_data['Tea']
 
     sia = SentimentIntensityAnalyzer()

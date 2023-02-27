@@ -8,10 +8,10 @@ import pandas as pd
 
 from geopy.geocoders import Nominatim
 
-from config import FEED_DATA_PATH, USER_DATA_PATH, BUSINESS_WEEKLY_PATH, BUSINESS_USER_LOCATIONS_PATH, BUSINESS_POSTS_USER_CATEGORY_PATH, FigurePaths
+from config import FigurePaths, FilePaths
 
-feed_df = pd.read_csv(FEED_DATA_PATH)
-users_df = pd.read_csv(USER_DATA_PATH)
+feed_df = pd.read_csv(FilePaths.FEED_DATA_PATH)
+users_df = pd.read_csv(FilePaths.USER_DATA_PATH)
 
 
 # User categories
@@ -56,7 +56,7 @@ def find_user_location_by_business():
         user_business_grouped.loc[user, 'Location'] = user_location.loc[user, 'Location']
     
     user_business_grouped = user_business_grouped.reset_index().groupby(['BusinessName','Location']).count().reset_index()
-    user_business_grouped.rename(columns={"UserName": "UserCount"}).to_csv(BUSINESS_USER_LOCATIONS_PATH, encoding='utf-8', index=False)
+    user_business_grouped.rename(columns={"UserName": "UserCount"}).to_csv(FilePaths.BUSINESS_USER_LOCATIONS_PATH, encoding='utf-8', index=False)
 
 # Influencer types for posts by business
 def find_influencer_type_per_deal_by_business():
@@ -65,7 +65,7 @@ def find_influencer_type_per_deal_by_business():
     for i in range(0, len(feed_entries)):
         feed_entries[i] = feed_entries[i] | dict(Category=influencers.loc[feed_entries[i]['UserName'], 'Category'])
     category_summary = pd.DataFrame(feed_entries).groupby(['BusinessName', 'Category']).count().reset_index()
-    category_summary.rename(columns={"UserName": "PostCount"}).to_csv(BUSINESS_POSTS_USER_CATEGORY_PATH, encoding='utf-8', index=False)
+    category_summary.rename(columns={"UserName": "PostCount"}).to_csv(FilePaths.BUSINESS_POSTS_USER_CATEGORY_PATH, encoding='utf-8', index=False)
 
 def generate_user_socials():
     ig_count = users_df.groupby(['Instagram_Username']).ngroups
@@ -254,8 +254,47 @@ def generate_business_weekly_summary():
     feed_grouped_weekly = feed_grouped_weekly.reset_index()
     feed_grouped_weekly = feed_grouped_weekly.sort_values(by=['Week', 'BusinessName'])
     feed_grouped_weekly = feed_grouped_weekly[['Week', 'BusinessName', 'DealCount', 'BrandReview', 'ProductReview', 'RecommendedPercentage']]
-    feed_grouped_weekly.to_csv(BUSINESS_WEEKLY_PATH, encoding='utf-8', index=False)
+    feed_grouped_weekly.to_csv(FilePaths.BUSINESS_WEEKLY_PATH, encoding='utf-8', index=False)
 
+def generate_individual_business_deal_figures():
+    business_weekly = pd.read_csv(FilePaths.BUSINESS_WEEKLY_PATH)
+    for business_name in business_weekly["BusinessName"].unique().tolist():
+        business_filtered = business_weekly[business_weekly.BusinessName == business_name]
+        business_filtered = business_filtered.sort_values(by=["Week"])
+        
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        fig.add_trace(
+            go.Scatter(x=business_filtered["Week"], y=business_filtered["DealCount"], name="Weekly Deal Count"),
+            secondary_y=False,
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=business_filtered["Week"],
+                y=business_filtered["DealCount"].cumsum(), name="Cumulative Deal Count"),
+                secondary_y=True,
+        )
+
+        fig.update_layout(
+            title_text=f"{business_name} Deal Count by Week + Cumulative Deals",
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
+        )
+
+        # Set x-axis title
+        fig.update_xaxes(title_text="Week")
+
+        # Set y-axes titles
+        fig.update_yaxes(title_text="<b>Weekly</b> Deals", secondary_y=False)
+        fig.update_yaxes(title_text="<b>Cumulative</b> Deals", secondary_y=True)
+
+        fig.write_html(f"{FigurePaths.INDIVIDUAL_BUSINESS_DEAL_COUNTS_DIR}{business_name}.html", include_plotlyjs="directory")
+    
 def assign_week_to_deals():
     global feed_df
     feed_df['Week'] = pd.to_datetime(feed_df['DealStarted']) - pd.to_timedelta(7, unit='d')
@@ -283,3 +322,6 @@ if __name__ == "__main__":
     generate_business_weekly_summary()
     find_user_location_by_business()
     find_influencer_type_per_deal_by_business()
+
+    # Business Specific Figures
+    generate_individual_business_deal_figures()

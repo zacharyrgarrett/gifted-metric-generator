@@ -2,7 +2,7 @@ import firebase_admin
 import numpy as np
 import pandas as pd
 
-from config import BUSINESS_NAME_BASELINE_SCORE, COMMON_BUSINESS_NAMES, FIREBASE_KEY_PATH
+from config import BUSINESS_NAME_BASELINE_SCORE, COMMON_BUSINESS_NAMES, FilePaths
 from firebase_admin import credentials
 from firebase_admin import firestore
 from fuzzywuzzy import fuzz
@@ -10,7 +10,7 @@ from fuzzywuzzy import process
 
 
 # Create firestore link
-cred = credentials.Certificate(FIREBASE_KEY_PATH)
+cred = credentials.Certificate(FilePaths.FIREBASE_KEY_PATH)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 

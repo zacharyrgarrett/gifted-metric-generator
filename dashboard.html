@@ -19,6 +19,10 @@
     <!-- Custom CSS-->
     <link rel="stylesheet" href="./dashboard_files/custom.css" />
 
+    <!-- Tabulator-->
+    <link href="https://unpkg.com/tabulator-tables/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables/dist/js/tabulator.min.js"></script>
+
     <title>Website</title>
   </head>
   <body>
@@ -43,6 +47,9 @@
           </li>
           <li class="nav-item" id="page2-nav">
             <a class="nav-link" href="#" onclick="showPage('page2')">Feed</a>
+          </li>
+          <li class="nav-item" id="page3-nav">
+            <a class="nav-link" href="#" onclick="showPage('page3')">Business</a>
           </li>
         </ul>
       </div>
@@ -117,6 +124,28 @@
       </div>
     </div>
 
+    <!-- Page 3 -->
+    <div class="container mt-5" id="page3" style="display: block;">
+      <h1 class="page-header">
+        Gifted
+        <small class="gifted-text">Business Metrics</small>
+        <small class="header-metric">
+          Total: <span id="brand-count-2">0</span>
+        </small>
+      </h1>
+      <div class="row">
+        <div class="col-md-12 portfolio-item" id="business-overview-table"></div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 portfolio-item">
+          <iframe id="business-deal-count-figure"
+            src="./figures/business_specific/deal_count_figures/Edikted.html"
+            style="width: 100%; height: 100%"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+    
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script
@@ -134,7 +163,8 @@
       integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
       crossorigin="anonymous"
     ></script>
-
+    
+    <script src="./dashboard_files/business_tables.js"></script>
     <script>
       window.addEventListener("load", (event) => {
         const get_params = window.location.search.substr(1);
@@ -144,7 +174,8 @@
         }
 
         document.querySelector('#page2').style.display = "none";
-
+        document.querySelector('#page3').style.display = "none";
+        
         setKeyMetrics();
       });
 
@@ -154,6 +185,7 @@
         document.getElementById("user-count").textContent = key_metrics["total_user_count"];
         document.getElementById("deal-count").textContent = key_metrics["total_deal_count"];
         document.getElementById("brand-count").textContent = key_metrics["total_brand_count"];
+        document.getElementById("brand-count-2").textContent = key_metrics["total_brand_count"];
       }
 
       function showPage(pageId) {
@@ -171,6 +203,9 @@
         // Add active nav
         document.getElementById(pageId + "-nav").classList.add("active");
       }
+
+      // Main operations
+      render_business_overview_table()
     </script>
   </body>
 </html>
