@@ -5,6 +5,7 @@ from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 
 import pandas as pd
+import numpy as np
 
 from geopy.geocoders import Nominatim
 
@@ -294,6 +295,107 @@ def generate_individual_business_deal_figures():
         fig.update_yaxes(title_text="<b>Cumulative</b> Deals", secondary_y=True)
 
         fig.write_html(f"{FigurePaths.INDIVIDUAL_BUSINESS_DEAL_COUNTS_DIR}{business_name}.html", include_plotlyjs="directory")
+
+def generate_feed_gantt():
+    filled_dates_df = feed_df.copy().sort_values(by=["DealEnded", "DealStarted"])
+    missing_date_loc = feed_df.DealEnded.isnull()
+    filled_dates_df.loc[missing_date_loc, 'DealEnded'] = filled_dates_df.loc[missing_date_loc, 'DealStarted'].apply(
+        lambda x: (datetime.strptime(x, "%Y-%m-%d") + timedelta(days=21)).strftime("%Y-%m-%d")
+    )
+
+    data = {"line_x": [], "line_y": [], "deal_start": [], "deal_end": []}
+    ids = []
+    for index, row in filled_dates_df.iterrows():
+        ids.append(f"{row['UserName']} - {row['BusinessName']} ({row['DealStarted']})")
+    
+    ids1 = []
+    for index, row in filled_dates_df.loc[~missing_date_loc].iterrows():
+        data["deal_start"].append(row["DealStarted"])
+        data["deal_end"].append(row["DealEnded"])
+        data["line_x"].extend([row["DealStarted"], row["DealEnded"], None])
+        id = f"{row['UserName']} - {row['BusinessName']} ({row['DealStarted']})"
+        data["line_y"].extend([id, id, None])
+        ids1.append(id)
+
+    ids2 = []
+    unfinished_data = {"line_x": [], "line_y": [], "deal_start": [], "deal_end": []}
+    for index, row in filled_dates_df.loc[missing_date_loc].iterrows():
+        unfinished_data["deal_start"].append(row["DealStarted"])
+        unfinished_data["deal_end"].append(row["DealEnded"])
+        unfinished_data["line_x"].extend([row["DealStarted"], row["DealEnded"], None])
+        id = f"{row['UserName']} - {row['BusinessName']} ({row['DealStarted']})"
+        unfinished_data["line_y"].extend([id, id, None])
+        ids2.append(id)
+
+    fig = go.Figure(
+        data=[
+            go.Scattergl(
+                x=data["line_x"],
+                y=data["line_y"],
+                mode="lines",
+                showlegend=False,
+                marker=dict(
+                    color="grey"
+                ),
+            ),
+            go.Scattergl(
+                x=unfinished_data["line_x"],
+                y=unfinished_data["line_y"],
+                mode="lines",
+                showlegend=False,
+                marker=dict(
+                    color="grey"
+                ),
+            ),
+            go.Scatter(
+                x=data["deal_start"],
+                y=ids,
+                mode="markers",
+                name="DealStarted",
+                marker=dict(
+                    color="grey",
+                    size=10
+                )
+            ),
+            go.Scatter(
+                x=unfinished_data["deal_start"],
+                y=ids2,
+                mode="markers",
+                name="DealStarted",
+                showlegend=False,
+                marker=dict(
+                    color="grey",
+                    size=10
+                )
+            ),
+            go.Scatter(
+                x=data['deal_end'],
+                y=ids1,
+                mode="markers",
+                name="DealEnded",
+                marker=dict(
+                    color="#56AA88",
+                    size=10
+                )   
+            ),
+            go.Scatter(
+                x=unfinished_data['deal_end'],
+                y=ids2,
+                mode='markers',
+                name='In-Progress',
+                marker=dict(symbol='arrow', color='#87cefa', size=16, angle=90),
+            ),
+        ]
+    )
+    
+    fig.update_layout(
+        title="Deal Lengths",
+        height=1000,
+        legend_itemclick=False
+    )
+    
+    fig.write_html(FigurePaths.DEAL_LENGTHS, include_plotlyjs="directory")
+
     
 def assign_week_to_deals():
     global feed_df
@@ -308,6 +410,8 @@ if __name__ == "__main__":
     # Verify paths exist
     verify_prerequisites()
 
+    generate_feed_gantt()
+    exit()
     # User Figures
     generate_user_categories()
     generate_user_socials()

@@ -17,6 +17,7 @@ class FilePaths:
     BUSINESS_POSTS_USER_CATEGORY_PATH = f"{BUSINESS_DIR_PATH}/business_influencer_categories.csv"
 
 class FigurePaths:
+    DEAL_LENGTHS = f"{FIGURES_DIR_PATH}/deal_lengths.html"
     INDIVIDUAL_BUSINESS_DEAL_COUNTS_DIR = f"{BUSINESS_SPECIFIC_FIGURE_DIR_PATH}/deal_count_figures/"
     FEED_BY_BUSINESS_CATEGORY = f"{FIGURES_DIR_PATH}/feed_by_business_category.html"
     FIRST_POST_BY_WEEK = f"{FIGURES_DIR_PATH}/first_post_by_week.html"
