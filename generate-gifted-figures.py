@@ -277,7 +277,7 @@ def generate_individual_business_deal_figures():
         )
 
         fig.update_layout(
-            title_text=f"{business_name} Deal Count by Week + Cumulative Deals",
+            title_text=f"<b>{business_name}</b> Deal Count by Week + Cumulative Deals",
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
@@ -410,8 +410,6 @@ if __name__ == "__main__":
     # Verify paths exist
     verify_prerequisites()
 
-    generate_feed_gantt()
-    exit()
     # User Figures
     generate_user_categories()
     generate_user_socials()
@@ -421,6 +419,7 @@ if __name__ == "__main__":
     assign_week_to_deals()
     generate_feed_by_business_category()
     generate_first_post_summarization()
+    generate_feed_gantt()
 
     # Generate additional reports
     generate_business_weekly_summary()
